@@ -1,0 +1,159 @@
+{
+  "mutations": [
+    {
+      "id": "01-delete-markPrompted",
+      "description": "delete counters.markPrompted() from commit(to:)",
+      "file": "Sources/ReviewKit/ReviewPromptFlow.swift",
+      "expectedReds": 5,
+      "edits": [
+        {
+          "find": [
+            "        counters.markPrompted()"
+          ],
+          "replace": []
+        }
+      ]
+    },
+    {
+      "id": "02-fire-systemPromptRequested-early",
+      "description": "fire .systemPromptRequested from recordOutcome",
+      "file": "Sources/ReviewKit/ReviewPromptFlow.swift",
+      "expectedReds": 5,
+      "edits": [
+        {
+          "find": [
+            "        events(.rated(outcome))"
+          ],
+          "replace": [
+            "        events(.rated(outcome))",
+            "        events(.systemPromptRequested)"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "03-widen-abandon-guard",
+      "description": "widen abandon()'s guard to case .presenting",
+      "file": "Sources/ReviewKit/ReviewPromptFlow.swift",
+      "expectedReds": 4,
+      "edits": [
+        {
+          "find": [
+            "        guard case .presenting(outcome: .none) = state else { return }"
+          ],
+          "replace": [
+            "        guard case .presenting = state else { return }"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "04-drop-setback-check",
+      "description": "drop the setback check from meetsSharedFloors",
+      "file": "Sources/ReviewKit/ReviewGate.swift",
+      "expectedReds": 4,
+      "edits": [
+        {
+          "find": [
+            "        // Read exactly like the cooldown above, including the direction it fails",
+            "        // in: a clock that moved backwards leaves the stamp in the future, the",
+            "        // elapsed span negative, and the gate shut. Staying quiet is the cheap",
+            "        // mistake in both cases.",
+            "        if let lastSetbackAt = state.lastSetbackAt,",
+            "           now.timeIntervalSince(lastSetbackAt) < setbackCooldown {",
+            "            return false",
+            "        }",
+            ""
+          ],
+          "replace": []
+        }
+      ]
+    },
+    {
+      "id": "05-clamp-negative-thresholds",
+      "description": "clamp negative thresholds instead of trapping",
+      "file": "Sources/ReviewKit/ReviewPolicy.swift",
+      "expectedReds": 4,
+      "edits": [
+        {
+          "find": [
+            "        precondition(",
+            "            minimumValueMoments >= 0 && minimumLaunches >= 0",
+            "                && minimumFirstUseAgeHours >= 0 && cooldownDays >= 0",
+            "                && setbackCooldownHours >= 0,",
+            "            \"ReviewKit: policy thresholds must not be negative.\"",
+            "        )",
+            "        self.minimumValueMoments = minimumValueMoments",
+            "        self.minimumLaunches = minimumLaunches",
+            "        minimumFirstUseAge = .hours(Double(minimumFirstUseAgeHours))",
+            "        cooldown = .days(Double(cooldownDays))",
+            "        setbackCooldown = .hours(Double(setbackCooldownHours))"
+          ],
+          "replace": [
+            "        self.minimumValueMoments = max(0, minimumValueMoments)",
+            "        self.minimumLaunches = max(0, minimumLaunches)",
+            "        minimumFirstUseAge = .hours(Double(max(0, minimumFirstUseAgeHours)))",
+            "        cooldown = .days(Double(max(0, cooldownDays)))",
+            "        setbackCooldown = .hours(Double(max(0, setbackCooldownHours)))"
+          ]
+        },
+        {
+          "find": [
+            "        precondition(",
+            "            minimumLaunches >= 0 && minimumFirstUseAgeHours >= 0",
+            "                && cooldownDays >= 0 && setbackCooldownHours >= 0,",
+            "            \"ReviewKit: policy thresholds must not be negative.\"",
+            "        )",
+            "        self.minimumLaunches = minimumLaunches",
+            "        minimumFirstUseAge = .hours(Double(minimumFirstUseAgeHours))",
+            "        cooldown = .days(Double(cooldownDays))",
+            "        setbackCooldown = .hours(Double(setbackCooldownHours))"
+          ],
+          "replace": [
+            "        self.minimumLaunches = max(0, minimumLaunches)",
+            "        minimumFirstUseAge = .hours(Double(max(0, minimumFirstUseAgeHours)))",
+            "        cooldown = .days(Double(max(0, cooldownDays)))",
+            "        setbackCooldown = .hours(Double(max(0, setbackCooldownHours)))"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "06-unconditional-resolvePrompt",
+      "description": "collapse resolvePrompt's switch to an unconditional request",
+      "file": "Sources/ReviewKitUI/ReviewPrompt.swift",
+      "expectedReds": 9,
+      "edits": [
+        {
+          "find": [
+            "    switch flow.promptDidDismiss() {",
+            "    case .positive?: requestReview()",
+            "    case .negative?: onNegative()",
+            "    case nil: break",
+            "    }"
+          ],
+          "replace": [
+            "    _ = flow.promptDidDismiss()",
+            "    requestReview()"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "09-disabled-fallback-fires",
+      "description": "let a nil launchFallback prompt instead of failing closed",
+      "file": "Sources/ReviewKit/ReviewGate.swift",
+      "expectedReds": 2,
+      "edits": [
+        {
+          "find": [
+            "            guard let policy = configuration.launchFallback else { return false }"
+          ],
+          "replace": [
+            "            guard let policy = configuration.launchFallback else { return true }"
+          ]
+        }
+      ]
+    }
+  ]
+}

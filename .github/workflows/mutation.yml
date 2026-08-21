@@ -1,0 +1,55 @@
+name: Mutation coverage
+
+# Separate from ci.yml because this is slow: seven full build-and-test cycles,
+# one per mutation in scripts/mutations/. CLAUDE.md's mutation table is only as
+# trustworthy as this workflow running regularly — it is what turns "measured
+# on the current tree" into a checked claim instead of a comment nobody re-runs.
+on:
+  pull_request:
+    paths:
+      - 'Sources/**'
+      - 'Tests/**'
+  workflow_dispatch:
+  schedule:
+    - cron: '17 6 * * 1' # weekly, so drift is caught even between PRs that touch Sources/Tests.
+
+jobs:
+  mutation-check:
+    # Same Xcode 26 floor as ci.yml, and for the same reason — this shells into
+    # `swift test`, so it cannot compile the exit tests on an older image.
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run the mutation harness
+        run: ./scripts/mutation-check.sh
+
+      - name: Check CLAUDE.md's table agrees with scripts/mutations/mutations.json
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          # Pull the "Reds" column out of CLAUDE.md's mutation table, in row
+          # order — the same order mutations.json lists them in. A cell like
+          # "4 (3 in release — see below)" reduces to 4: only the leading integer
+          # is the number this workflow (and mutation-check.sh) actually measures.
+          claude_reds="$(awk '
+              /^\| Mutation \| Reds \|/ { f=1; next }
+              f && /^\| *-+ *\| *-+ *\|/ { next }
+              f && /^\|/ { print }
+              f && !/^\|/ { exit }
+            ' CLAUDE.md \
+            | sed -E 's/^.*\|[[:space:]]*([0-9]+)[^|]*\|[[:space:]]*$/\1/')"
+
+          manifest_reds="$(python3 scripts/mutations/apply.py --reds)"
+
+          echo "CLAUDE.md rows:      $(printf '%s' "$claude_reds" | tr '\n' ' ')"
+          echo "mutations.json rows: $(printf '%s' "$manifest_reds" | tr '\n' ' ')"
+
+          if ! diff <(printf '%s\n' "$claude_reds") <(printf '%s\n' "$manifest_reds") >table-sync.diff; then
+            echo "::error::CLAUDE.md's mutation table disagrees with scripts/mutations/mutations.json (diff below, CLAUDE.md on the left). Update both in the same commit, and say why the count moved."
+            cat table-sync.diff
+            exit 1
+          fi
+
+          echo "OK: CLAUDE.md's mutation table agrees with mutations.json row for row."

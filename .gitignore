@@ -1,0 +1,23 @@
+.DS_Store
+/.build
+/.swiftpm
+/Packages
+xcuserdata/
+*.xcodeproj
+# One named exception: the example app's project is tracked on purpose, so the
+# sample opens and runs with no tooling installed — see Examples/README.md. The
+# blanket rule above stays, because a project generated anywhere else here is
+# derived and must not be committed. `xcuserdata/` above keeps the per-user cruft
+# out of the tracked one.
+!/Examples/*.xcodeproj
+.netrc
+
+# === Skills managed by skills.sh (npx skills) ===
+# skills-lock.json and scripts/update-skills.sh are committed; the downloaded skill
+# folders (.agents/skills) and their agent symlinks (.claude/skills) are derived —
+# rebuild them with scripts/update-skills.sh.
+# Blanket-ignored so the managed set is never hand-listed (that list kept rotting).
+# Nothing under .claude/ is committed here, authored or managed, and `git add -f` is
+# not an exception to that.
+/.agents/
+/.claude/skills/*

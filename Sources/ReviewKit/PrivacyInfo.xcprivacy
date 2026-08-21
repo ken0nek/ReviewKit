@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!--
+		No tracking: nothing here reads the IDFA, sets a cross-app identifier,
+		or contacts a network. The package imports Foundation and nothing else.
+	-->
+	<key>NSPrivacyTracking</key>
+	<false/>
+	<key>NSPrivacyTrackingDomains</key>
+	<array/>
+	<!--
+		Nothing is collected and nothing leaves the device. The counters stay in
+		the suite the host supplies, and the host's own analytics — which this
+		package never calls — receives a rating *bucket*, never a star count.
+	-->
+	<key>NSPrivacyCollectedDataTypes</key>
+	<array/>
+	<key>NSPrivacyAccessedAPITypes</key>
+	<array>
+		<!--
+			ReviewCounters reads and writes four keys of gate bookkeeping:
+			two counters and two timestamps. Both reasons are declared because
+			the storage is host-supplied and both cases genuinely occur —
+			`UserDefaults.standard` is the parameter default (CA92.1), while
+			a host that wants widgets and extensions counting passes an App
+			Group suite instead (1C8F.1).
+
+			Nothing here reads a key written by another app or the system, and
+			nothing written is reachable outside the host's own App Group.
+		-->
+		<dict>
+			<key>NSPrivacyAccessedAPIType</key>
+			<string>NSPrivacyAccessedAPICategoryUserDefaults</string>
+			<key>NSPrivacyAccessedAPITypeReasons</key>
+			<array>
+				<string>CA92.1</string>
+				<string>1C8F.1</string>
+			</array>
+		</dict>
+	</array>
+</dict>
+</plist>

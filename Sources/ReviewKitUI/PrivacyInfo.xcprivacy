@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!--
+		No tracking: this module draws a sheet and forwards a star count to
+		ReviewKit. It reads no identifier and contacts no network.
+	-->
+	<key>NSPrivacyTracking</key>
+	<false/>
+	<key>NSPrivacyTrackingDomains</key>
+	<array/>
+	<!--
+		Nothing is collected. The star the user taps is bucketed into a
+		two-value outcome before it reaches anything that could record it, so
+		the count itself never leaves the view.
+	-->
+	<key>NSPrivacyCollectedDataTypes</key>
+	<array/>
+	<!--
+		Deliberately empty, and not an oversight. This module imports SwiftUI
+		and StoreKit only; the review request is not a required-reason API, and
+		the gate's `UserDefaults` access lives in ReviewKit, which declares it
+		in its own manifest. A target's manifest covers that target — Apple is
+		explicit that an app's manifest cannot report a package's use on its
+		behalf, so the two ship separately rather than one covering both.
+	-->
+	<key>NSPrivacyAccessedAPITypes</key>
+	<array/>
+</dict>
+</plist>

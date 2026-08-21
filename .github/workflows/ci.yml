@@ -1,0 +1,145 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build-and-test:
+    # macos-26, not macos-15, and the reason is a hard floor rather than a
+    # preference: `TrapTests.swift` uses Swift Testing's exit tests
+    # (`#expect(processExitsWith:)`), which arrived in Swift 6.2 / Xcode 26.
+    # The macos-15 image still defaults to Xcode 16.4, where that macro resolves
+    # to the `Bool` overload and the test target fails to *compile* —
+    # "type 'Bool' has no member 'failure'". Those exit tests are the only
+    # coverage this package's load-bearing preconditions have, so the runner has
+    # to be one whose default Xcode is 26 or newer.
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v4
+
+      # Recorded so a future toolchain difference is a line in the log rather
+      # than a puzzle: the documented test counts and mutation reds are measured
+      # numbers, and knowing what compiled them is half of reproducing them.
+      - name: Record the toolchain
+        run: swift --version && xcodebuild -version
+
+      # These run on the macOS *host*, which is why Package.swift carries a macOS
+      # floor. That floor is not a support claim — iOS is the supported platform
+      # and the README's Platforms section is the claim. Without it SwiftPM falls
+      # back to its own ancient default and nothing compiles at all.
+
+      - name: Build (debug)
+        shell: bash
+        run: |
+          set -o pipefail
+          swift build 2>&1 | tee build-debug.log
+          # Zero warnings is a documented property of this package. Enforced here
+          # by grepping the build output rather than -warnings-as-errors, which
+          # would also apply to consumers building against this package.
+          if grep -q 'warning:' build-debug.log; then
+            echo "::error::swift build produced a warning — CLAUDE.md documents this package as building with zero warnings."
+            exit 1
+          fi
+
+      - name: Build (release)
+        shell: bash
+        run: |
+          set -o pipefail
+          swift build -c release 2>&1 | tee build-release.log
+          if grep -q 'warning:' build-release.log; then
+            echo "::error::swift build -c release produced a warning — CLAUDE.md documents this package as building with zero warnings."
+            exit 1
+          fi
+
+      - name: Test (debug)
+        shell: bash
+        run: |
+          set -o pipefail
+          swift test 2>&1 | tee test-debug.log
+
+      - name: Test (release)
+        shell: bash
+        run: |
+          set -o pipefail
+          swift test -c release 2>&1 | tee test-release.log
+
+      - name: Assert release drops the #if DEBUG surface
+        shell: bash
+        run: |
+          set -o pipefail
+          extract() {
+            grep -oE '[0-9]+ tests? in [0-9]+ suites?' "$1" | tail -1 | grep -oE '[0-9]+' | tr '\n' ' '
+          }
+          read -r debug_tests debug_suites <<<"$(extract test-debug.log)"
+          read -r release_tests release_suites <<<"$(extract test-release.log)"
+
+          echo "debug:   ${debug_tests:-?} tests / ${debug_suites:-?} suites"
+          echo "release: ${release_tests:-?} tests / ${release_suites:-?} suites"
+
+          if [[ -z "$debug_tests" || -z "$release_tests" ]]; then
+            echo "::error::could not parse a \"Test run with N tests in M suites\" summary line from swift test output."
+            exit 1
+          fi
+
+          # CLAUDE.md documents #if DEBUG-only suites and tests (ReviewGateDiagnosis,
+          # ReviewDiagnosticsView, and two tests in ReviewCountersGateTests that call
+          # a DEBUG-only accessor). Asserting the *relationship* rather than exact
+          # counts is what stays true as tests are added on either side — a
+          # hardcoded pair of numbers goes stale the moment either count changes.
+          if (( release_tests >= debug_tests || release_suites >= debug_suites )); then
+            echo "::error::release must report strictly fewer tests and suites than debug — the #if DEBUG surface may be leaking into release builds."
+            exit 1
+          fi
+
+  platforms:
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v4
+
+      # This is the only job that builds what actually ships. The build-and-test
+      # job above runs on the macOS host, so any `#if os(iOS)` code — and any
+      # iOS-only availability mistake — is invisible to it. This step is what
+      # catches that, so it is not redundant with the tests: it is the other half,
+      # and it is the one job whose platform this package actually claims.
+      #
+      # iOS is the only platform here, and adding another needs a runner that
+      # genuinely builds it. A tvOS or visionOS step on GitHub's macOS runners
+      # has to treat a missing platform *component* as a skip rather than a
+      # failure, and a green run then asserts nothing about that platform. That
+      # is why Package.swift declares neither. Reinstating one means reinstating
+      # the skip-on-missing-component branch, and the false green with it.
+
+      - name: iOS
+        run: xcodebuild -scheme ReviewKit-Package -destination 'generic/platform=iOS' build
+
+      # The example app is a real consumer of both products, so building it is the
+      # standing check that the README's documented usage still compiles.
+      # It links ReviewKit and ReviewKitUI, presents both `.reviewPrompt`
+      # overloads, and puts `ReviewDiagnosticsView` behind its own `#if DEBUG` — so
+      # a change that breaks the documented shape fails here rather than in an
+      # adopter. Unsigned, because CI has no signing identity and does not need one.
+      - name: Example app
+        run: |
+          xcodebuild -project Examples/ReviewKitExample.xcodeproj \
+            -scheme ReviewKitExample \
+            -destination 'generic/platform=iOS' \
+            CODE_SIGNING_ALLOWED=NO build
+
+  docs:
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: DocC build
+        shell: bash
+        run: |
+          set -o pipefail
+          xcodebuild docbuild -scheme ReviewKit-Package -destination 'generic/platform=iOS' 2>&1 | tee docbuild.log
+          # xcodebuild double-emits each diagnostic and DocC emits several
+          # resolution-attempt lines per broken reference, so a raw line count
+          # overstates the problem. Gate on zero occurrences, which is unambiguous.
+          if grep -q "doesn't exist at" docbuild.log; then
+            echo "::error::DocC reported an unresolved symbol or article link — see the DocC build log above."
+            exit 1
+          fi
