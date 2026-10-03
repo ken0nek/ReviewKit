@@ -1,0 +1,21 @@
+name: tagpr
+
+on:
+  push:
+    branches: [main]
+
+# tagpr opens and updates the release PR, writes CHANGELOG.md, and on merge pushes
+# the tag and creates the GitHub Release.
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  tagpr:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: Songmu/tagpr@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
