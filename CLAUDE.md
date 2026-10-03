@@ -220,3 +220,14 @@ Each of these looks like a bug or an oversight and is neither.
   changing this, count `~/Library/Preferences/ReviewKit*` **fifteen seconds** after a run — checking
   immediately reports a clean zero, which is how a first attempt gets mistakenly declared working.
 - Swift Testing (`@Test`, `#expect`, `@Suite`), not XCTest. Exit tests for anything that traps.
+
+## Releasing
+
+Releases are cut by [tagpr](https://github.com/Songmu/tagpr) (`.tagpr`, `.github/workflows/tagpr.yml`).
+Every push to `main` opens or updates a release PR that writes `CHANGELOG.md`; merging it pushes the
+tag and creates the GitHub Release. Do not tag by hand.
+
+- **Tags are bare semver** (`1.0.1`, not `v1.0.1`) — `vPrefix = false`.
+- **The bump is a patch unless the release PR carries `tagpr:minor` or `tagpr:major`.**
+- **There is no version file** (`versionFile = -`). The README's install snippet pins a major-version
+  lower bound and is not rewritten per release.
