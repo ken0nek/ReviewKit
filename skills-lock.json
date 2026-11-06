@@ -5,19 +5,19 @@
       "source": "emilkowalski/skills",
       "sourceType": "github",
       "skillPath": "skills/animation-vocabulary/SKILL.md",
-      "computedHash": "39319fc9a33c15be08666b3685f58666f042ff36bb902b7814c0834a5ba99df4"
+      "computedHash": "0058036865ecbb864fd0c4132efcc62425355d6e99c7e6ef6a936742d62a5dea"
     },
     "apple-design": {
       "source": "emilkowalski/skills",
       "sourceType": "github",
       "skillPath": "skills/apple-design/SKILL.md",
-      "computedHash": "8b94db67cb9edaad5f1501010804caa610131f1d2dfda0a27664b2e858deade3"
+      "computedHash": "0190417d092a0df447b000154e39733ea6d97efad6d3bec8a6ce3845aeb88914"
     },
-    "swift-concurrency-pro": {
-      "source": "twostraws/swift-concurrency-agent-skill",
+    "swift-concurrency": {
+      "source": "AvdLee/Swift-Concurrency-Agent-Skill",
       "sourceType": "github",
-      "skillPath": "swift-concurrency-pro/SKILL.md",
-      "computedHash": "db6c88d8da1a264188a2ad826a0ed73d227384315b27e47f3bb6b78ca1a3df40"
+      "skillPath": "skills/swift-concurrency/SKILL.md",
+      "computedHash": "49e4df69412710a0ca320c21a9d26cf4abb6d2c553960cffaceea5a09e3be792"
     },
     "swift-testing-pro": {
       "source": "twostraws/swift-testing-agent-skill",
@@ -29,7 +29,7 @@
       "source": "AvdLee/SwiftUI-Agent-Skill",
       "sourceType": "github",
       "skillPath": "swiftui-expert-skill/SKILL.md",
-      "computedHash": "f903fb98352328f65ee7b433cfbc36fd11e08861d0ba81dc12cdc0feca1e59ea"
+      "computedHash": "5388cd2368b525d2906798ac313c70415e971da35670e571e98baf8a7140505f"
     }
   }
 }
