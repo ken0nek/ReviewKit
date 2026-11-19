@@ -73,8 +73,9 @@ public extension View {
     /// rating is chosen and to dismiss itself. It must not call `requestReview()`,
     /// present anything on the strength of the rating, or emit its own analytics —
     /// the first two are dropped by the system for being mid-dismissal, and the
-    /// flow already emits `.rated` on every tap and `.dismissed` once the sheet is
-    /// gone.
+    /// flow already emits `.rated` on every tap, `.systemPromptRequested` once the
+    /// sheet is gone after a positive rating, and `.dismissed` when it is
+    /// dismissed without one.
     ///
     /// The cooldown is **not** stamped here. It is stamped when you commit, which
     /// is the moment you flip `isPresented`:
@@ -90,8 +91,8 @@ public extension View {
     /// through `commitToPrompt(trigger:)` instead, so that ask is accounted for
     /// like any other rather than spending a system prompt with nothing recorded.
     ///
-    /// - Note: available on every supported platform, because iOS and macOS both
-    ///   have an in-app review request. This modifier carried a platform guard
+    /// - Note: available on iOS, the only supported platform, and on the macOS
+    ///   test host; both have an in-app review request. This modifier carried a platform guard
     ///   while watchOS was supported, and would need one again the moment a
     ///   platform without `RequestReviewAction` is declared: an inert version
     ///   there would still emit `systemPromptRequested` for a request that can

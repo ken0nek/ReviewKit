@@ -11,8 +11,8 @@ import Testing
 /// after the process exits, so teardown cannot win. See the twin of this type in
 /// `ReviewKitTests` for the full account.
 private final class ThrowawaySuites {
-    /// `nonisolated(unsafe)` for the same reason `ReviewCounters` is
-    /// `@unchecked Sendable`: `UserDefaults` is thread-safe but unmarked.
+    /// `nonisolated(unsafe)` for the same reason `ReviewCounters` carries it on
+    /// its one `defaults` property: `UserDefaults` is thread-safe but unmarked.
     nonisolated(unsafe) static let defaults = UserDefaults(suiteName: "ReviewKitUITests.scratch")!
 
     private var made: [ReviewKeys] = []

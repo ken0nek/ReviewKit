@@ -17,7 +17,7 @@ import Testing
 /// `cfprefsd` is a separate daemon that flushes its pending domains roughly five
 /// seconds **after** the test process has exited — recreating every file. No
 /// in-process teardown can win that race. All of this is measured rather than
-/// assumed. Re-measure the same way, by counting the plists ten seconds after a
+/// assumed. Re-measure the same way, by counting the plists fifteen seconds after a
 /// run rather than immediately.
 ///
 /// So the domain count is bounded at one instead. Isolation comes from unique

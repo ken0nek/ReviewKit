@@ -7,8 +7,8 @@
 #
 #   tagpr.versionFile
 #       "-" means no version file: the version lives only in git tags. The README's install
-#       snippet pins a major-version lower bound (`from: "1.0.0"`), which is deliberately not
-#       bumped on every release.
+#       snippet pins a major-version lower bound (`.upToNextMajor(from: "1.0.0")`), which is
+#       deliberately not bumped on every release.
 #
 #   tagpr.vPrefix
 #       Tags are bare semver (`1.0.0`, not `v1.0.0`), as SwiftPM consumers expect.

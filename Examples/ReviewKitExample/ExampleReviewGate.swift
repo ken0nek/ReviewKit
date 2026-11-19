@@ -4,7 +4,7 @@ import ReviewKit
 /// Everything a host has to decide, in one place, so the views below stay about
 /// the UI and this stays about the gate.
 ///
-/// The point of this file is that it is the *whole* integration. Four key names,
+/// The point of this file is that it is the *whole* integration. Five key names,
 /// one configuration, one flow — and the two orderings the package exists to
 /// enforce are upheld by the call sites in `ContentView`, not by anything here.
 @MainActor
@@ -27,8 +27,8 @@ final class ExampleReviewGate: ObservableObject {
 
     /// **A demo cadence, not a shipping one.** The floors are low so the gate
     /// opens within a few taps instead of a few days. The 120-day cooldown is
-    /// real, because a cooldown of `0` would prompt on every value moment and
-    /// this screen is meant to show you the cooldown working. Use `Reset` to
+    /// real, because a cooldown of `0` would prompt again as soon as the floors
+    /// are met again, and this screen is meant to show you the cooldown working. Use `Reset` to
     /// test again rather than shortening it.
     ///
     /// A real app's numbers belong in its own source, as literals — which is why
@@ -90,7 +90,8 @@ final class ExampleReviewGate: ObservableObject {
 
     func reset() {
         counters.reset()
+        counters.recordLaunch()
         log.removeAll()
-        note("counters reset")
+        note("counters reset, recordLaunch()")
     }
 }

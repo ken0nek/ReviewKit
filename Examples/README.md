@@ -18,7 +18,6 @@ watch the order it prints:
 
 ```
 systemPromptRequested  ← the hand-off actually happened
-dismissed
 rated(positive)
 ```
 
@@ -67,14 +66,14 @@ Three files, in the order they matter:
 
 | File | What it is |
 | --- | --- |
-| `ExampleReviewGate.swift` | the entire integration — four key names, one cadence, one flow |
+| `ExampleReviewGate.swift` | the entire integration — five key names, one cadence, one flow |
 | `ContentView.swift` | the commit doors and `.reviewPrompt`, both overloads |
-| `ReviewKitExampleApp.swift` | `recordLaunch()`, once per launch |
+| `ReviewKitExampleApp.swift` | `recordLaunch()`, once per window |
 
 The cadence in `ExampleReviewGate` is a **demo cadence, not a shipping one** — the
 floors are low so the gate opens in a few taps. The 120-day cooldown is real on
-purpose, because a cooldown of `0` prompts on every value moment and would hide
-the behavior this screen is meant to show.
+purpose, because a cooldown of `0` prompts again as soon as the floors are met
+again and would hide the behavior this screen is meant to show.
 
 ## Maintaining the project file
 

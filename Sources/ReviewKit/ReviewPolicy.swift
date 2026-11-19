@@ -44,7 +44,8 @@ public struct ValueMomentPolicy: Sendable, Equatable {
     /// How long to stay silent after a setback — see
     /// ``ReviewCounters/recordSetback()``.
     ///
-    /// `0`, the default, means setbacks are not consulted at all.
+    /// `0`, the default, ignores every setback already past. A stamp dated in
+    /// the future still closes the gate until it passes.
     public let setbackCooldown: TimeInterval
 
     /// - Parameters:
@@ -53,7 +54,7 @@ public struct ValueMomentPolicy: Sendable, Equatable {
     ///   - minimumFirstUseAgeHours: how old the first recorded use must be.
     ///   - cooldownDays: how long to stay silent after a prompt was shown.
     ///   - setbackCooldownHours: how long to stay silent after a setback. `0`
-    ///     ignores setbacks entirely.
+    ///     ignores past setbacks; a future-dated stamp still blocks until it passes.
     /// - Precondition: every threshold is non-negative.
     public init(
         minimumValueMoments: Int = 0,
@@ -101,7 +102,8 @@ public struct LaunchFallbackPolicy: Sendable, Equatable {
     public let minimumFirstUseAge: TimeInterval
     /// How long to stay silent after a prompt was last shown.
     public let cooldown: TimeInterval
-    /// How long to stay silent after a setback. `0` ignores setbacks entirely.
+    /// How long to stay silent after a setback. `0` ignores past setbacks; a
+    /// future-dated stamp still blocks until it passes.
     public let setbackCooldown: TimeInterval
 
     /// - Parameters:
@@ -109,7 +111,7 @@ public struct LaunchFallbackPolicy: Sendable, Equatable {
     ///   - minimumFirstUseAgeHours: how old the first recorded use must be.
     ///   - cooldownDays: how long to stay silent after a prompt was shown.
     ///   - setbackCooldownHours: how long to stay silent after a setback. `0`
-    ///     ignores setbacks entirely.
+    ///     ignores past setbacks; a future-dated stamp still blocks until it passes.
     /// - Precondition: every threshold is non-negative.
     public init(
         minimumLaunches: Int = 0,

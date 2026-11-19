@@ -10,7 +10,8 @@ struct ReviewKitExampleApp: App {
                 ContentView(gate: gate)
             }
             .task {
-                // Once per launch, before anything reads the counters.
+                // Once per window, before anything reads the counters. An app
+                // with several windows counts once per process instead.
                 // `recordLaunch()` is `nonisolated` — counting never needs the
                 // main actor, only presenting does.
                 gate.counters.recordLaunch()

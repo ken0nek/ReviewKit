@@ -110,8 +110,9 @@ written to, so the dying child leaves no plist behind.
 `Examples/ReviewKitExample.xcodeproj` — a one-screen iOS app linking both products. `open` it. There
 is nothing to generate, and the repo must not require a project generator.
 
-- **Its event log is the deliverable, not the screen.** A five-star tap prints `rated(positive)`,
-  `dismissed`, `systemPromptRequested` in that order, and the commit door prints "cooldown stamped"
+- **Its event log is the deliverable, not the screen.** A five-star tap prints `rated(positive)`
+  then `systemPromptRequested` once the sheet is gone (`dismissed` is for an unrated dismissal only),
+  and the commit door prints "cooldown stamped"
   before anything is presented. That makes both orderings observable, which no test here can do.
 - **CI builds it**, so it is the standing check that the README's snippet still compiles. Do not
   delete that CI step and leave the app — an example nothing builds rots into a claim.

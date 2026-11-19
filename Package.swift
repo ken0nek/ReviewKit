@@ -3,8 +3,8 @@ import PackageDescription
 
 let package = Package(
     name: "ReviewKit",
-    // Foundation only — no UI, no StoreKit — so nothing here needs a floor at
-    // all. The iOS one is a policy choice: match the oldest OS this is actually
+    // The `ReviewKit` target is Foundation only — no UI, no StoreKit — so it
+    // needs no floor at all; `ReviewKitUI` imports SwiftUI and StoreKit. The iOS one is a policy choice: match the oldest OS this is actually
     // built and tested against, rather than court a long tail that is under 2%
     // worldwide and would never be tested against.
     //

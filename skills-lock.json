@@ -1,35 +1,33 @@
 {
-  "version": 1,
+  "version": 2,
   "skills": {
-    "animation-vocabulary": {
-      "source": "emilkowalski/skills",
-      "sourceType": "github",
-      "skillPath": "skills/animation-vocabulary/SKILL.md",
-      "computedHash": "0058036865ecbb864fd0c4132efcc62425355d6e99c7e6ef6a936742d62a5dea"
-    },
     "apple-design": {
       "source": "emilkowalski/skills",
       "sourceType": "github",
       "skillPath": "skills/apple-design/SKILL.md",
-      "computedHash": "0190417d092a0df447b000154e39733ea6d97efad6d3bec8a6ce3845aeb88914"
+      "computedHash": "163ba8b42c7d9d5ccb08674266d4727c9ec610b9d876c906b1f29ce5e0d933da",
+      "commit": "64eb3deb9a5fbfa041faf783e0bc3fd635872e9c"
     },
     "swift-concurrency": {
       "source": "AvdLee/Swift-Concurrency-Agent-Skill",
       "sourceType": "github",
       "skillPath": "skills/swift-concurrency/SKILL.md",
-      "computedHash": "49e4df69412710a0ca320c21a9d26cf4abb6d2c553960cffaceea5a09e3be792"
+      "computedHash": "7977e699ad9eae2cccdb8de7520b5fb7701ed01a6bde52d47263bc30dec09482",
+      "commit": "3b1580d8398e0b5408b3bf0bada0e941a1cfc642"
     },
     "swift-testing-pro": {
       "source": "twostraws/swift-testing-agent-skill",
       "sourceType": "github",
       "skillPath": "swift-testing-pro/SKILL.md",
-      "computedHash": "576d9b4705c76262095e2470e99bb9a89324ac4467e7ee54b7032697a8789b3d"
+      "computedHash": "9b4907e1b8fe535b8626a2bf40e7b2857d76f61cec9b2e112e186f62d4a05e20",
+      "commit": "2d6bba14a3c8bf3694f218b92fffe617c41ae43e"
     },
     "swiftui-expert-skill": {
       "source": "AvdLee/SwiftUI-Agent-Skill",
       "sourceType": "github",
       "skillPath": "swiftui-expert-skill/SKILL.md",
-      "computedHash": "5388cd2368b525d2906798ac313c70415e971da35670e571e98baf8a7140505f"
+      "computedHash": "187f7d0b9b9103f0935460c1b8060a77131c5ef24fa0d6757f5f5afdd23b7966",
+      "commit": "62bd760f005093d1e2e4de5db156e456a5f96400"
     }
   }
 }

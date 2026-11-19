@@ -99,7 +99,7 @@ struct ContentView: View {
             } header: {
                 Text(verbatim: "Events, newest first")
             } footer: {
-                Text(verbatim: "Watch the order on a five-star tap: rated, then dismissed, then systemPromptRequested. The request comes last because the system drops one made mid-dismissal — silently, while your analytics still records a success.")
+                Text(verbatim: "Watch the order on a five-star tap: rated, then systemPromptRequested (dismissed appears only when the sheet closes unrated). The request comes last because the system drops one made mid-dismissal — silently, while your analytics still records a success.")
             }
         }
         .navigationTitle(Text(verbatim: "ReviewKit"))
@@ -138,9 +138,12 @@ struct ContentView: View {
 
         if forceShow {
             // The host bypasses its own gate. The package only reports the flag.
-            _ = gate.flow.commitToPrompt(trigger: .valueMoment)
-            gate.note("forceShow on → commitToPrompt(valueMoment)")
-            present(useOwnSheet: useOwnSheet)
+            if gate.flow.commitToPrompt(trigger: .valueMoment) {
+                gate.note("forceShow on → commitToPrompt(valueMoment) → true")
+                present(useOwnSheet: useOwnSheet)
+            } else {
+                gate.note("forceShow on → commitToPrompt → false, a prompt is already in flight")
+            }
             return
         }
 

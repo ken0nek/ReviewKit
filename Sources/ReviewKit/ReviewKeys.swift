@@ -27,7 +27,10 @@ import Foundation
 /// reads as long-ago-or-never. Under ``firstUseAt`` that only delays the ask.
 /// Under ``lastPromptedAt`` it is the unrecoverable direction described above:
 /// the cooldown reads as expired and the next eligible moment re-asks someone who
-/// already declined. Inspect the suite before you adopt, and prefer
+/// already declined. A millisecond epoch is the exception, and the opposite
+/// failure: it reads as a date far in the future, which closes the gate for
+/// good and, under ``firstUseAt``, is never rewritten. Inspect the suite before
+/// you adopt, and prefer
 /// ``ReviewCounters/state`` in a debug build to confirm what the package sees.
 ///
 /// A greenfield app can use ``ReviewKeys/standard`` and never think about it.

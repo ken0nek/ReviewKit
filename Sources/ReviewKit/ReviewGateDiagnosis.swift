@@ -82,7 +82,7 @@ public extension ReviewGateDiagnosis.Check.Requirement {
     /// A short developer-facing name for a debug row.
     ///
     /// Here for the same reason ``ReviewGateDiagnosis/Check/detail`` is: without
-    /// it each debug menu spells these five requirements its own way, and the
+    /// it each debug menu spells these six requirements its own way, and the
     /// raw case name is what a menu settles for. A debug menu has no
     /// localization to respect, so English is the whole API.
     var label: String {

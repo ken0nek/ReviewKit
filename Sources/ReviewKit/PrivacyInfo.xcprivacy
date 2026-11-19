@@ -20,8 +20,8 @@
 	<key>NSPrivacyAccessedAPITypes</key>
 	<array>
 		<!--
-			ReviewCounters reads and writes four keys of gate bookkeeping:
-			two counters and two timestamps. Both reasons are declared because
+			ReviewCounters reads and writes up to five keys of gate bookkeeping:
+			two counters and three timestamps. Both reasons are declared because
 			the storage is host-supplied and both cases genuinely occur —
 			`UserDefaults.standard` is the parameter default (CA92.1), while
 			a host that wants widgets and extensions counting passes an App

@@ -109,7 +109,7 @@ public final class ReviewPromptFlow {
     ///   - events: where to send ``ReviewEvent`` values. Defaults to discarding.
     ///
     /// `nonisolated`, like the three recorders below and for the same reason.
-    /// Constructing a flow touches no `state`: it stores four `Sendable` values
+    /// Constructing a flow touches no `state`: it stores three `Sendable` values
     /// and checks one pairing. Requiring the main actor here would undo what
     /// those recorders buy — a background App Intent or a widget extension that
     /// has no main-actor flow to reach has to build one locally, and would
@@ -193,11 +193,14 @@ public final class ReviewPromptFlow {
     /// cooldown is what bounds how often this can return `true`** — there is no
     /// separate per-session cap, because with any real cooldown one could never
     /// be the binding constraint. It also returns `false` while a prompt is
-    /// already in flight, so two asks cannot overlap.
+    /// already in flight, so two asks from one flow cannot overlap. Two flows
+    /// over one store do not see each other's prompts.
     ///
-    /// Present as soon as it returns `true`. If you want to let a success
-    /// animation land first, delay your own presentation — the cooldown is
-    /// already safely recorded either way.
+    /// Present as soon as it returns `true`. Call this only where you can
+    /// present now: under another presentation, arm with
+    /// ``ReviewCounters/shouldPrompt(trigger:configuration:)``, which stamps
+    /// nothing, and commit once that presentation is gone, because a commit that
+    /// cannot present costs the user a full cooldown.
     ///
     /// - Important: Treat a `true` return as a commitment. Not presenting after
     ///   one costs the user a full cooldown of silence.

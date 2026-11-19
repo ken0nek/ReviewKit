@@ -26,8 +26,9 @@ import Foundation
 /// ## Shared suites
 ///
 /// Increments are read-modify-write, so an app and an extension writing the same
-/// App Group suite in the same instant can lose one. The direction is the safe
-/// one — an undercount delays the ask and never hastens it — and the first-use
+/// App Group suite in the same instant can lose one. An increment that races
+/// ``markPrompted()`` can also write the pre-prompt count back, so the next ask
+/// needs fewer fresh value moments; the cooldown still bounds it. The first-use
 /// anchor races to the same value either way, so no locking is worth its cost
 /// here. What is *not* protected is wall-clock movement: a device clock jumped
 /// far forward reads the cooldown as expired. Backwards movement fails closed.

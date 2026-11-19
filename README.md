@@ -61,10 +61,16 @@ one correctly-sequenced slot for both branches.
 stamps before it returns `true`, and nothing about the rating is handed back to
 you anywhere but `promptDidDismiss()`.
 
+A `true` commit has already spent the cooldown, so commit only from a place that
+can present immediately. When the value moment lands under another sheet or
+cover, count it, and ask `counters.shouldPrompt(trigger:configuration:)` — which
+stamps nothing — whether to arm. Call `commitToPromptIfEligible` only once that
+sheet has gone and yours is about to go up.
+
 **Both orderings are easier to watch than to read.** `open
 Examples/ReviewKitExample.xcodeproj` — nothing to install — and tap five stars: the
-event log prints `rated(positive)`, then `dismissed`, then `systemPromptRequested`,
-in that order. See [`Examples/README.md`](Examples/README.md).
+event log prints `rated(positive)`, then `systemPromptRequested`, in that
+order. See [`Examples/README.md`](Examples/README.md).
 
 The platform allows roughly three review prompts per user per year, so spending
 one on somebody who would have left two stars is the expensive mistake. Your own
@@ -121,7 +127,7 @@ the urge to write `UserDefaults(suiteName:) ?? .standard` — it silently swallo
 the failure, falling back to a store your extensions cannot see.
 
 `UserDefaults(suiteName:)` returns `nil` for a name it cannot open *as a suite* —
-`nil` itself, the app's own bundle identifier, or the global domain — which in
+the app's own bundle identifier or the global domain — which in
 practice means a typo or a name that drifted from the entitlement. A missing
 entitlement is a *different* failure the guard cannot see: the process still gets
 a usable suite, just a private one, so the app and each extension write under the
@@ -146,8 +152,10 @@ rather than hastening it, and so goes unnoticed.
 > Any *other* shape under a timestamp key reads as long-ago-or-never. Under
 > `firstUseAt` that only delays the ask. Under `lastPromptedAt` it re-asks
 > everyone who is mid-cooldown, which is the one mistake no later release can
-> undo. Print `counters.state` against a real user's suite before you ship the
-> switch.
+> undo. A millisecond epoch is the exception, and the opposite failure: it reads
+> as a date far in the future, which closes the gate for good and, under
+> `firstUseAt`, is never rewritten. Print `counters.state` against a real user's
+> suite before you ship the switch.
 
 ### 2. Choose a cadence
 
@@ -168,6 +176,18 @@ users who never rebuild it, so a floor here would not be a stricter gate but a
 permanent one. Express "sustained launches *and* value moments" on the
 value-moment policy instead, with a high `minimumLaunches`.
 
+The launch fallback is evaluated only when you ask with it:
+
+```swift
+// Once per launch, after recordLaunch().
+if flow.commitToPromptIfEligible(trigger: .launchFallback) {
+    isShowingRatingSheet = true
+}
+```
+
+An app that never asks with `.launchFallback` has no fallback, whatever the
+configuration holds.
+
 ```swift
 let config = ReviewConfiguration(
     valueMoment: ValueMomentPolicy(
@@ -183,8 +203,10 @@ Pass `launchFallback: nil` to switch that trigger off. There is no default
 argument — do not simulate "off" with a floor you believe unreachable, because
 that holds only until something starts counting launches.
 
-`cooldownDays: 0` means *no cooldown*, not "short": it prompts on every value
-moment. Round a sub-day cadence **up**.
+`cooldownDays: 0` means *no cooldown*, not "short": it prompts again as soon as
+the floors are met again. Committing zeroes the value-moment counter, so that is
+every value moment only for a value-moment floor of 1 or 0. Round a sub-day
+cadence **up**.
 
 #### Staying quiet after something goes wrong
 
@@ -239,6 +261,16 @@ let flow = ReviewPromptFlow(counters: counters, configuration: config) { event i
 ReviewKit owns no analytics taxonomy — map `ReviewEvent` onto your own names. The
 `ReviewTrigger` raw values become a wire contract the moment you log them as
 event names, so renaming a case renames the event.
+
+**Hold one flow for the life of the app.** The prompt in flight lives in the
+`ReviewPromptFlow` instance. A flow created in a view's initializer or body, or
+built per screen, is replaced when that view is rebuilt: the rating is then
+recorded on a fresh instance, `promptDidDismiss()` returns `nil`, and the review
+is never requested. Own it at app or scene scope.
+
+**Count launches.** Call `flow.recordLaunch()` once per launch. Every policy with
+a `minimumLaunches` above zero, `.default` included, never opens without it, and
+nothing reports why.
 
 ### 4. Present your own sheet, and act on the dismissal
 
@@ -407,7 +439,8 @@ Your sheet's only obligation is to call `flow.recordOutcome(_:)` as the rating i
 chosen and to dismiss itself. It must not call `requestReview()`, present
 anything on the strength of the rating, or emit its own analytics — the first two
 get dropped for being mid-dismissal, and the flow already emits `.rated` on every
-tap and `.dismissed` once the sheet is gone.
+tap, `.systemPromptRequested` once the sheet is gone after a positive rating, and
+`.dismissed` when it is dismissed without one.
 
 ### If you do not have a sheet yet
 
@@ -420,7 +453,8 @@ SomeScreen()
     .tint(.yellow)
 ```
 
-`ReviewPromptCopy` takes four `Text` values. The module ships no strings and no
+`ReviewPromptCopy` takes three `Text` values and a closure that returns a `Text`
+for each star's accessibility label. The module ships no strings and no
 colors of its own: a rating sheet is entirely voice, and a shared one that
 arrives with its own wording fits whichever app it was written for and no other.
 Each slot takes a catalog key, a typed resource, or a string your server already
@@ -439,7 +473,7 @@ open an issue rather than a fork.
 ## Platforms
 
 **iOS 18** is the supported platform and the only one this package claims.
-Supported here means built on every push and tested.
+Supported here means built for iOS on every push, and tested on the macOS host.
 
 **macOS, watchOS, tvOS and visionOS are not supported.** Some of them compile.
 That is not a claim of support, and it is not the bar. `Package.swift` does carry a
