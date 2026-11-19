@@ -62,6 +62,12 @@ public struct ReviewCounters: Sendable {
         keys: ReviewKeys = .standard,
         now: @escaping @Sendable () -> Date = { Date() }
     ) {
+        let names = [keys.launchCount, keys.valueMomentCount, keys.firstUseAt, keys.lastPromptedAt]
+            + [keys.lastSetbackAt].compactMap { $0 }
+        assert(
+            Set(names).count == names.count,
+            "ReviewKit: ReviewKeys must name distinct keys, not \(names)."
+        )
         self.defaults = defaults
         self.keys = keys
         self.now = now

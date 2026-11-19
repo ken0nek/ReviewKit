@@ -73,7 +73,7 @@
       "id": "05-clamp-negative-thresholds",
       "description": "clamp negative thresholds instead of trapping",
       "file": "Sources/ReviewKit/ReviewPolicy.swift",
-      "expectedReds": 4,
+      "expectedReds": 9,
       "edits": [
         {
           "find": [
@@ -143,7 +143,7 @@
       "id": "09-disabled-fallback-fires",
       "description": "let a nil launchFallback prompt instead of failing closed",
       "file": "Sources/ReviewKit/ReviewGate.swift",
-      "expectedReds": 2,
+      "expectedReds": 3,
       "edits": [
         {
           "find": [

@@ -23,8 +23,8 @@ let isDebugBuild: Bool = {
 /// so the assertion has to be made from outside it. Each body runs in a fresh
 /// child process and must capture nothing.
 ///
-/// The `highRatingFloor` trap lives in `ReviewKitUITests`, next to the modifier
-/// that raises it.
+/// The `copy:` overload's `highRatingFloor` trap lives in `ReviewKitUITests`,
+/// next to the modifier that raises it.
 @Suite("Traps")
 struct TrapTests {
     @Test("a negative value-moment threshold traps rather than clamping")
@@ -55,6 +55,41 @@ struct TrapTests {
     func negativeFallbackThresholdTraps() async {
         await #expect(processExitsWith: .failure) {
             _ = LaunchFallbackPolicy(minimumLaunches: -1)
+        }
+    }
+
+    @Test("a negative value-moment launch floor traps")
+    func negativeValueMomentLaunchFloorTraps() async {
+        await #expect(processExitsWith: .failure) {
+            _ = ValueMomentPolicy(minimumLaunches: -1)
+        }
+    }
+
+    @Test("a negative value-moment first-use age traps")
+    func negativeValueMomentFirstUseAgeTraps() async {
+        await #expect(processExitsWith: .failure) {
+            _ = ValueMomentPolicy(minimumFirstUseAgeHours: -1)
+        }
+    }
+
+    @Test("a negative fallback first-use age traps")
+    func negativeFallbackFirstUseAgeTraps() async {
+        await #expect(processExitsWith: .failure) {
+            _ = LaunchFallbackPolicy(minimumFirstUseAgeHours: -1)
+        }
+    }
+
+    @Test("a negative fallback cooldown traps")
+    func negativeFallbackCooldownTraps() async {
+        await #expect(processExitsWith: .failure) {
+            _ = LaunchFallbackPolicy(cooldownDays: -1)
+        }
+    }
+
+    @Test("a negative fallback setback cooldown traps")
+    func negativeFallbackSetbackCooldownTraps() async {
+        await #expect(processExitsWith: .failure) {
+            _ = LaunchFallbackPolicy(setbackCooldownHours: -1)
         }
     }
 
@@ -97,6 +132,32 @@ struct TrapTests {
         }
     }
 
+    @Test(
+        "a fallback-only setback cooldown with no key to stamp trips in a debug build",
+        .enabled(if: isDebugBuild)
+    )
+    func fallbackSetbackCooldownWithoutAKeyTrips() async {
+        await #expect(processExitsWith: .failure) {
+            await MainActor.run {
+                let defaults = UserDefaults(suiteName: "ReviewKitTests.trap")!
+                let keys = ReviewKeys(
+                    launchCount: "k.launch",
+                    valueMomentCount: "k.value",
+                    firstUseAt: "k.first",
+                    lastPromptedAt: "k.prompt"
+                    // lastSetbackAt deliberately absent.
+                )
+                _ = ReviewPromptFlow(
+                    counters: ReviewCounters(defaults: defaults, keys: keys),
+                    configuration: ReviewConfiguration(
+                        valueMoment: ValueMomentPolicy(),
+                        launchFallback: LaunchFallbackPolicy(setbackCooldownHours: 24)
+                    )
+                )
+            }
+        }
+    }
+
     /// The same cadence with the key supplied is the supported shape and must not
     /// trip — otherwise the assertion above is just "setbacks are unusable".
     @Test("a setback cooldown with a key to stamp is fine")
@@ -110,6 +171,90 @@ struct TrapTests {
                 launchFallback: LaunchFallbackPolicy()
             )
         )
+    }
+
+    /// `markPrompted()` writes the stamp, then zeroes the value-moment count. Under
+    /// one shared name the zero lands on the stamp, the gate reads "never
+    /// prompted", and the cooldown never applies.
+    @Test(
+        "two keys sharing a name trip in a debug build",
+        .enabled(if: isDebugBuild)
+    )
+    func duplicateKeyNamesTrip() async {
+        await #expect(processExitsWith: .failure) {
+            let defaults = UserDefaults(suiteName: "ReviewKitTests.trap")!
+            _ = ReviewCounters(
+                defaults: defaults,
+                keys: ReviewKeys(
+                    launchCount: "k.launch",
+                    valueMomentCount: "k.shared",
+                    firstUseAt: "k.first",
+                    lastPromptedAt: "k.shared"
+                )
+            )
+        }
+    }
+
+    @Test(
+        "a setback key that repeats another trips in a debug build",
+        .enabled(if: isDebugBuild)
+    )
+    func setbackKeyRepeatingAnotherTrips() async {
+        await #expect(processExitsWith: .failure) {
+            let defaults = UserDefaults(suiteName: "ReviewKitTests.trap")!
+            _ = ReviewCounters(
+                defaults: defaults,
+                keys: ReviewKeys(
+                    launchCount: "k.launch",
+                    valueMomentCount: "k.value",
+                    firstUseAt: "k.first",
+                    lastPromptedAt: "k.prompt",
+                    lastSetbackAt: "k.launch"
+                )
+            )
+        }
+    }
+
+    @Test("distinct key names are fine, with or without a setback key")
+    func distinctKeyNamesAreFine() {
+        let defaults = UserDefaults(suiteName: "ReviewKitTests.scratch")!
+        _ = ReviewCounters(defaults: defaults, keys: .standard)
+        _ = ReviewCounters(
+            defaults: defaults,
+            keys: ReviewKeys(
+                launchCount: "k.launch",
+                valueMomentCount: "k.value",
+                firstUseAt: "k.first",
+                lastPromptedAt: "k.prompt"
+            )
+        )
+    }
+
+    /// A floor of 0 or below sends a one-star rating to the store prompt; one
+    /// above 5 sends nothing there at all.
+    @Test(
+        "a star floor of zero trips in a debug build",
+        .enabled(if: isDebugBuild)
+    )
+    func starFloorOfZeroTrips() async {
+        await #expect(processExitsWith: .failure) {
+            _ = ReviewOutcome.forStarRating(5, highRatingFloor: 0)
+        }
+    }
+
+    @Test(
+        "a star floor of six trips in a debug build",
+        .enabled(if: isDebugBuild)
+    )
+    func starFloorOfSixTrips() async {
+        await #expect(processExitsWith: .failure) {
+            _ = ReviewOutcome.forStarRating(5, highRatingFloor: 6)
+        }
+    }
+
+    @Test("every star floor from 1 to 5 is accepted", arguments: 1 ... 5)
+    func starFloorsOneToFiveAreAccepted(floor: Int) {
+        #expect(ReviewOutcome.forStarRating(5, highRatingFloor: floor) == .positive)
     }
 
     /// The far end of the first silent failure: a rating recorded against a

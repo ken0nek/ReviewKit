@@ -12,8 +12,15 @@ public enum ReviewOutcome: Sendable, Equatable {
 
     /// Buckets a star rating. The default floor of 4-of-5 is the convention the
     /// two-stage ask is built on.
+    ///
+    /// - Precondition: `highRatingFloor` is within `1...5`. A debug build traps
+    ///   otherwise.
     public static func forStarRating(_ rating: Int, highRatingFloor: Int = 4) -> ReviewOutcome {
-        rating >= highRatingFloor ? .positive : .negative
+        assert(
+            (1 ... 5).contains(highRatingFloor),
+            "ReviewKit: highRatingFloor must be within 1...5, not \(highRatingFloor)."
+        )
+        return rating >= highRatingFloor ? .positive : .negative
     }
 }
 

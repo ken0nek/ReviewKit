@@ -19,6 +19,10 @@
 #   tagpr.majorLabels / tagpr.minorLabels
 #       Label the release PR (or a merged PR) `tagpr:major` or `tagpr:minor` to bump those
 #       components. Without a label, the bump is a patch.
+#       A public API break, a new case on a public enum included, ships only in a major.
+#       .github/workflows/api.yml (scripts/api-check.sh) diffs the public API against the
+#       latest tag and fails on a break unless the release PR or the merged PR carries
+#       `tagpr:major`.
 [tagpr]
 	vPrefix = false
 	releaseBranch = main

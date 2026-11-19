@@ -29,9 +29,9 @@ counts below, so a weakened suite shows up as a smaller number and not just as "
 | fire `.systemPromptRequested` from `recordOutcome` | 5 |
 | widen `abandon()`'s guard to `case .presenting` | 4 |
 | drop the setback check from `meetsSharedFloors` | 4 (3 in release — see below) |
-| clamp negative thresholds instead of trapping | 4 |
+| clamp negative thresholds instead of trapping | 9 |
 | collapse `resolvePrompt`'s switch to an unconditional request | 9 |
-| let a `nil` `launchFallback` prompt instead of failing closed | 2 |
+| let a `nil` `launchFallback` prompt instead of failing closed | 3 (1 in release) |
 
 Run `scripts/mutation-check.sh` to re-measure all seven. It applies each mutation from
 `scripts/mutations/mutations.json` to a scratch copy outside the repo, runs `swift test`, and fails if
@@ -42,8 +42,9 @@ table and fails if the two disagree.
 
 Two things about the numbers. **"Reds" counts failing *tests*, not recorded *issues*** — the setback
 row is 4 tests but 389 issues, because the diagnosis-agreement test walks an exhaustive matrix. And
-**every count is a debug number**: the setback row drops to 3 under `swift test -c release`, where
-`ReviewGateDiagnosisTests` does not compile.
+**every count is a debug number**: under `swift test -c release` the setback row drops to 3 and the
+`nil` `launchFallback` row to 1, because `ReviewGateDiagnosisTests`, which catches the rest of both,
+does not compile there.
 
 The mutations are find/replace entries in one JSON file, not patches, and `apply.py` requires every
 find-string to match exactly once. Do not re-encode them as diffs — a diff carries hunk line numbers
@@ -65,8 +66,8 @@ and incidental context that rot whenever anything near the mutation moves.
 
 ```sh
 swift build
-swift test              # 106 tests, 11 suites
-swift test -c release   # 85 tests, 9 suites — required, not a nicety
+swift test              # 125 tests, 12 suites, summed over two summary lines
+swift test -c release   # 104 tests, 10 suites — required, not a nicety
 xcodebuild -scheme ReviewKit-Package -destination 'generic/platform=iOS' build
 ```
 
@@ -92,10 +93,15 @@ test run. Only the CI iOS build catches a mistake in one.
 **The two counts reconcile exactly, and that is the check.** Two whole suites are `#if DEBUG` and
 release drops both: `ReviewGateDiagnosis` (12) and `ReviewDiagnosticsView` (7). Two more tests are
 individually gated inside `ReviewCountersGateTests`, because they call the debug-only
-`diagnose(trigger:configuration:)`. So 19 + 2 = 21, and 106 − 21 = 85. If release ever reports 106, or
+`diagnose(trigger:configuration:)`. So 19 + 2 = 21, and 125 − 21 = 104. If release ever reports 125, or
 the arithmetic stops closing, debug-only surface is leaking into release builds. Skip counts are not
-symmetric — debug skips one test, release skips two — so check which configuration a skip count came
-from before trusting it.
+symmetric — debug skips one test, release skips seven, one per trap that is an `assert` — so check
+which configuration a skip count came from before trusting it.
+
+**A commit that moves a count updates it.** When tests change the totals above, the same commit
+updates the two `swift test` comments and the arithmetic in the paragraph above, measured, not
+computed.
+A mutation row that rises follows the rule beside the table.
 
 **Another platform gets added on demand, not in advance.** A platform nothing builds and nothing
 tests is a claim, not support. Do not reinstate one without an adopter and a runner that genuinely
@@ -131,10 +137,12 @@ Each of these looks like a bug or an oversight and is neither.
 
 - **No UI, no StoreKit call, and no copy in `ReviewKit`.** Apps differ on the sheet and agree on the
   gate. Sharing the sheet and hiding the ordering is exactly backwards.
-- **The package never owns UserDefaults key names — the host injects them** (`ReviewKeys`). A
-  host is typically a shipped app whose users already carry review state, and both directions of
-  getting this wrong are unrecoverable: lose the counters and someone mid-cooldown is re-asked. Lose the stamp and you
-  spend one of the platform's ~3 yearly prompts on someone who already declined.
+- **A shipped host injects the UserDefaults key names it already uses** (`ReviewKeys`).
+  `ReviewKeys.standard`, the default, is for an app with no review state yet, and its strings are
+  pinned by a test. Both directions of getting this wrong are unrecoverable: lose the counters and
+  someone mid-cooldown is re-asked. Lose the stamp and you spend one of the platform's ~3 yearly
+  prompts on someone who already declined. The names must be distinct. `ReviewCounters.init` asserts
+  it, because under one shared name `markPrompted()` zeroes its own stamp.
 - **`launchFallback` is optional, and `nil` is the trigger switched off.** There is deliberately **no
   default argument**. The alternative is simulating "off" with floors believed unreachable, which
   holds only until something starts counting launches.
@@ -230,5 +238,9 @@ tag and creates the GitHub Release. Do not tag by hand.
 
 - **Tags are bare semver** (`1.0.1`, not `v1.0.1`) — `vPrefix = false`.
 - **The bump is a patch unless the release PR carries `tagpr:minor` or `tagpr:major`.**
+- **A public API break ships only in a major, and a new case on a public enum is a break.**
+  `.github/workflows/api.yml` runs `scripts/api-check.sh` against the latest tag and fails on a break
+  unless the release PR, the pull request under test or the merged one carries `tagpr:major`. A new
+  `assert` or `precondition` on an input accepted before is a minor (`tagpr:minor`).
 - **There is no version file** (`versionFile = -`). The README's install snippet pins a major-version
   lower bound and is not rewritten per release.

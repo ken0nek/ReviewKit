@@ -33,6 +33,9 @@ import Foundation
 /// you adopt, and prefer
 /// ``ReviewCounters/state`` in a debug build to confirm what the package sees.
 ///
+/// The names must be distinct. Two counters sharing a key overwrite each other,
+/// so ``ReviewCounters`` traps on a repeated name in a debug build.
+///
 /// A greenfield app can use ``ReviewKeys/standard`` and never think about it.
 public struct ReviewKeys: Sendable, Equatable, Hashable {
     public var launchCount: String

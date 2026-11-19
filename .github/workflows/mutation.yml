@@ -5,10 +5,21 @@ name: Mutation coverage
 # trustworthy as this workflow running regularly — it is what turns "measured
 # on the current tree" into a checked claim instead of a comment nobody re-runs.
 on:
+  push:
+    branches: [main]
+    paths:
+      - 'Sources/**'
+      - 'Tests/**'
+      - 'CLAUDE.md'
+      - 'scripts/mutation-check.sh'
+      - 'scripts/mutations/**'
   pull_request:
     paths:
       - 'Sources/**'
       - 'Tests/**'
+      - 'CLAUDE.md'
+      - 'scripts/mutation-check.sh'
+      - 'scripts/mutations/**'
   workflow_dispatch:
   schedule:
     - cron: '17 6 * * 1' # weekly, so drift is caught even between PRs that touch Sources/Tests.
@@ -21,8 +32,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Run the mutation harness
-        run: ./scripts/mutation-check.sh
+      - name: Record the toolchain
+        run: swift --version && xcodebuild -version
 
       - name: Check CLAUDE.md's table agrees with scripts/mutations/mutations.json
         shell: bash
@@ -53,3 +64,6 @@ jobs:
           fi
 
           echo "OK: CLAUDE.md's mutation table agrees with mutations.json row for row."
+
+      - name: Run the mutation harness
+        run: ./scripts/mutation-check.sh

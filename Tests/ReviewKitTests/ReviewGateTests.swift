@@ -122,6 +122,71 @@ struct ReviewGateTests {
         ))
     }
 
+    // MARK: - Spans in literal seconds
+
+    // Literal seconds rather than `.days` and `.hours`: fixtures built from the
+    // helpers the policies use would cancel a wrong constant out.
+    private static let day: TimeInterval = 86_400
+    private static let hour: TimeInterval = 3_600
+
+    @Test("the launch fallback honors its cooldown")
+    func launchFallbackHonorsItsCooldown() {
+        var state = ReviewState(
+            launchCount: 20,
+            valueMomentCount: 0,
+            firstUseAt: now.addingTimeInterval(-25 * Self.hour),
+            lastPromptedAt: now.addingTimeInterval(-119 * Self.day)
+        )
+        #expect(!shouldPrompt(state, trigger: .launchFallback))
+
+        state.lastPromptedAt = now.addingTimeInterval(-121 * Self.day)
+        #expect(shouldPrompt(state, trigger: .launchFallback))
+    }
+
+    @Test("the launch fallback needs sustained use")
+    func launchFallbackNeedsSustainedUse() {
+        var state = ReviewState(
+            launchCount: 20,
+            valueMomentCount: 0,
+            firstUseAt: now.addingTimeInterval(-23 * Self.hour)
+        )
+        #expect(!shouldPrompt(state, trigger: .launchFallback))
+
+        state.firstUseAt = now.addingTimeInterval(-25 * Self.hour)
+        #expect(shouldPrompt(state, trigger: .launchFallback))
+    }
+
+    @Test("the value-moment cooldown is 120 days of seconds")
+    func valueMomentCooldownInSeconds() {
+        var state = ReviewState(
+            launchCount: 5,
+            valueMomentCount: 2,
+            firstUseAt: now.addingTimeInterval(-25 * Self.hour),
+            lastPromptedAt: now.addingTimeInterval(-119 * Self.day)
+        )
+        #expect(!shouldPrompt(state))
+
+        state.lastPromptedAt = now.addingTimeInterval(-121 * Self.day)
+        #expect(shouldPrompt(state))
+    }
+
+    @Test("a switched-off fallback fails closed")
+    func switchedOffFallbackFailsClosed() {
+        let fallbackOff = ReviewConfiguration(valueMoment: ValueMomentPolicy(), launchFallback: nil)
+        let state = ReviewState(
+            launchCount: 500,
+            valueMomentCount: 0,
+            firstUseAt: now.addingTimeInterval(-400 * Self.day)
+        )
+
+        #expect(!ReviewGate.shouldPrompt(
+            trigger: .launchFallback, state: state, configuration: fallbackOff, now: now
+        ))
+        #expect(ReviewGate.shouldPrompt(
+            trigger: .valueMoment, state: state, configuration: fallbackOff, now: now
+        ))
+    }
+
     // MARK: - Setbacks
 
     /// The same floors as `.default`, plus a day of silence after a setback.

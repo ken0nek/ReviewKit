@@ -1,0 +1,49 @@
+name: API compatibility
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  api-break:
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+
+      - name: Record the toolchain
+        run: swift --version && xcodebuild -version
+
+      # tagpr reads tagpr:major from the release pull request or from a merged
+      # one, so the label is looked for in the same places.
+      - name: Is the next release a major version?
+        id: major
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVENT_LABELS: ${{ toJSON(github.event.pull_request.labels.*.name) }}
+        run: |
+          set -euo pipefail
+          labels="$(jq -r '.[]?' <<<"${EVENT_LABELS:-[]}")"
+          labels+=$'\n'"$(gh pr list --repo "$GITHUB_REPOSITORY" --state open --label tagpr \
+              --json labels --jq '.[].labels[].name')"
+          if [[ "$GITHUB_EVENT_NAME" == "push" ]]; then
+            labels+=$'\n'"$(gh api "repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA/pulls" \
+                --jq '.[].labels[].name')"
+          fi
+          if grep -qx 'tagpr:major' <<<"$labels"; then
+            echo "flag=--major" >>"$GITHUB_OUTPUT"
+          else
+            echo "flag=" >>"$GITHUB_OUTPUT"
+          fi
+
+      - name: Diff the public API against the latest release
+        shell: bash
+        run: ./scripts/api-check.sh "$(git describe --tags --abbrev=0)" ${{ steps.major.outputs.flag }}

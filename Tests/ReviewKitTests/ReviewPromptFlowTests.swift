@@ -107,6 +107,12 @@ struct ReviewCountersTests {
         #expect(counters.state.valueMomentCount == 0)
     }
 
+    @Test("the clock is the one the counters were built with")
+    func clockIsTheInjectedOne() {
+        let (counters, _, _) = suites.makeCounters(now: { t0 })
+        #expect(counters.clock() == t0)
+    }
+
     @Test("reset clears every key it owns")
     func reset() {
         let (counters, _, _) = suites.makeCounters(now: { t0 })
@@ -273,6 +279,14 @@ struct ReviewPromptFlowTests {
         #expect(counters.state.lastPromptedAt != nil)
         #expect(counters.state.valueMomentCount == 0)
         #expect(recorder.events == [.promptShown(.valueMoment)])
+    }
+
+    @Test("the committed trigger is the one reported")
+    func promptShownCarriesTheTrigger() {
+        let (flow, _, recorder) = makeFlow()
+
+        #expect(flow.commitToPrompt(trigger: .launchFallback))
+        #expect(recorder.events == [.promptShown(.launchFallback)])
     }
 
     /// The regression that matters: with the cooldown stamped, a flow built on the

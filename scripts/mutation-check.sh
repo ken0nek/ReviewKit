@@ -85,6 +85,12 @@ if ! (cd "$SCRATCH/sanity-check" && swift build 2>&1); then
     echo "FAIL: the unmutated package does not build in the scratch copy." >&2
     exit 1
 fi
+if ! (cd "$SCRATCH/sanity-check" && swift test) >"$SCRATCH/baseline.log" 2>&1 \
+    || grep -qE 'Test ".*" failed after' "$SCRATCH/baseline.log"; then
+    echo "FAIL: the unmutated suite is not green, so no row's count can be trusted." >&2
+    tail -20 "$SCRATCH/baseline.log" >&2
+    exit 1
+fi
 rm -rf "$SCRATCH/sanity-check"
 echo
 
@@ -129,7 +135,7 @@ while IFS=$'\t' read -r mutation expected description; do
     fi
 
     actual="$(grep -cE 'Test ".*" failed after' "$test_log" || true)"
-    issues="$(printf '%s\n' "$summary_line" | grep -Eo 'with [0-9]+ issues?' | grep -Eo '[0-9]+' || echo 0)"
+    issues="$(printf '%s\n' "$summary_line" | grep -Eo 'with [0-9]+ issues?' | grep -Eo '[0-9]+' | awk '{ s += $1 } END { print s + 0 }' || true)"
     [[ -n "$issues" ]] || issues=0
 
     result="ok"
