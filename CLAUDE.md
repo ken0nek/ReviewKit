@@ -159,7 +159,8 @@ Each of these looks like a bug or an oversight and is neither.
   `assert`s on the pairing — `assert`, not `precondition`, because it disables a feature rather than
   corrupting state.
 - **Negative thresholds trap rather than clamp**, and `ReviewConfiguration` is **not** `Codable`.
-  Clamping `-1` to `0` would still mean no cooldown.
+  Clamping `-1` to `0` would still mean no cooldown. `ReviewOutcome.forStarRating` asserts its
+  floor is within `1...5`, debug only, for the same reason.
 - **`cooldownDays` cannot express a sub-day cooldown.** `0` means *no cooldown*, not "short". Anyone
   migrating something sub-day rounds **up**.
 - **Timestamps read a `Date` object as well as epoch seconds.** An injected key can hold one, and
